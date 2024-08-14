@@ -70,7 +70,7 @@ M.setup = function(user_config)
     vim.cmd([[
         augroup RemoteSync
             autocmd!
-            autocmd BufWritePost * lua require('remote_sync').sync_to_remote()
+            autocmd BufWritePost * lua require('remote-ssh').sync_to_remote()
         augroup END
     ]])
 end
