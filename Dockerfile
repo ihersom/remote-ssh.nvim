@@ -15,6 +15,10 @@ RUN mkdir ~/.ssh/ && \
     touch ~/.ssh/authorized_keys && \
     echo "${PUBKEY}" >> ~/.ssh/authorized_keys
 
+RUN mkdir /home/test_dir && \
+    touch /home/test_dir/test_file.txt && \
+    echo "test contents loaded successfully" >> /home/test_dir/test_file.txt
+
 # Expose port 22
 EXPOSE 22
 
