@@ -59,6 +59,34 @@ M.load_config = function()
     return true
 end
 
+-- Function to create the .remote-ssh.yaml file
+M.create_config_file = function()
+    local config_file = '.remote-ssh.yaml'
+    local cwd = uv.cwd()
+    local config_path = cwd .. '/' .. config_file
+
+    -- Default YAML content
+    local default_config = {
+        remote_host = "user@remote_host",
+        remote_folder = "/path/to/remote/folder",
+        local_folder = "/path/to/local/folder",
+        rsync_options = "-avz"
+    }
+
+    -- Convert Lua table to YAML string
+    local content = yaml.dump(default_config)
+
+    -- Write YAML content to the config file
+    local file = io.open(config_path, "w")
+    if file then
+        file:write(content)
+        file:close()
+        vim.api.nvim_out_write(config_file .. " created successfully in " .. cwd .. ".\n")
+    else
+        vim.api.nvim_err_writeln("Failed to create " .. config_file .. " in " .. cwd)
+    end
+end
+
 -- Function to sync from remote to local
 M.sync_from_remote = function()
     if not M.is_active then return end
@@ -139,7 +167,7 @@ M.start = function()
     vim.cmd([[
         augroup RemoteSSH
             autocmd!
-            autocmd BufWritePost * lua require('remote_ssh').sync_to_remote()
+            autocmd BufWritePost * lua require('remote-ssh').sync_to_remote()
         augroup END
     ]])
 
@@ -166,8 +194,11 @@ M.stop = function()
 end
 
 -- Set up commands to start and stop the plugin
-vim.cmd('command! RemoteSSHStart lua require("remote-_ssh").start()')
+vim.cmd('command! RemoteSSHStart lua require("remote-ssh").start()')
 vim.cmd('command! RemoteSSHStop lua require("remote-ssh").stop()')
+
+-- Set up command to create the .remote-ssh.yaml file
+vim.cmd('command! RemoteSSHCreateConfig lua require("remote-ssh").create_config_file()')
 
 return M
 
