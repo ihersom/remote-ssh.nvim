@@ -3,7 +3,7 @@
 local M = {}
 
 local Job = require('plenary.job')
-local yaml = require('yaml')
+local yaml = require('yaml_nvim')
 local uv = vim.loop
 
 M.config = {
