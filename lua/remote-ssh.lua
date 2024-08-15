@@ -1,9 +1,9 @@
 
--- lua/remote_ssh.lua
+-- lua/remote-ssh.lua
 local M = {}
 
 local Job = require('plenary.job')
-local yaml = require('yaml_nvim')
+local json = require('json')
 local uv = vim.loop
 
 M.config = {
@@ -15,9 +15,9 @@ M.config = {
 
 M.is_active = false  -- State to track if the plugin is running
 
--- Function to check if the .remote-ssh.yaml file exists
+-- Function to check if the .remote-ssh.json file exists
 M.check_config_file = function()
-    local config_file = '.remote-ssh.yaml'
+    local config_file = '.remote-ssh.json'
     local cwd = uv.cwd()
     local config_path = cwd .. '/' .. config_file
 
@@ -30,9 +30,9 @@ M.check_config_file = function()
     end
 end
 
--- Function to read YAML config from the local directory using yaml.nvim
+-- Function to read JSON config from the local directory using json.lua
 M.load_config = function()
-    local config_file = '.remote-ssh.yaml'
+    local config_file = '.remote-ssh.json'
     local cwd = uv.cwd()
     local config_path = cwd .. '/' .. config_file
 
@@ -46,10 +46,10 @@ M.load_config = function()
     local content = file:read("*all")
     file:close()
 
-    -- Parse YAML content using yaml.nvim
-    local ok, parsed_config = pcall(yaml.eval, content)
+    -- Parse JSON content using json.lua
+    local ok, parsed_config = pcall(json.decode, content)
     if not ok then
-        vim.api.nvim_err_writeln('Failed to parse YAML config: ' .. parsed_config)
+        vim.api.nvim_err_writeln('Failed to parse JSON config: ' .. parsed_config)
         return false
     end
 
@@ -59,13 +59,13 @@ M.load_config = function()
     return true
 end
 
--- Function to create the .remote-ssh.yaml file
+-- Function to create the .remote-ssh.json file
 M.create_config_file = function()
-    local config_file = '.remote-ssh.yaml'
+    local config_file = '.remote-ssh.json'
     local cwd = uv.cwd()
     local config_path = cwd .. '/' .. config_file
 
-    -- Default YAML content
+    -- Default JSON content
     local default_config = {
         remote_host = "user@remote_host",
         remote_folder = "/path/to/remote/folder",
@@ -73,10 +73,10 @@ M.create_config_file = function()
         rsync_options = "-avz"
     }
 
-    -- Convert Lua table to YAML string
-    local content = yaml.dump(default_config)
+    -- Convert Lua table to JSON string using json.lua
+    local content = json.encode(default_config)
 
-    -- Write YAML content to the config file
+    -- Write JSON content to the config file
     local file = io.open(config_path, "w")
     if file then
         file:write(content)
@@ -149,11 +149,11 @@ M.start = function()
 
     -- Check if the config file exists
     if not M.check_config_file() then
-        vim.api.nvim_err_writeln('.remote-ssh.yaml not found in the current directory. Remote sync will not be set up.')
+        vim.api.nvim_err_writeln('.remote-ssh.json not found in the current directory. Remote sync will not be set up.')
         return
     end
 
-    -- Load config from YAML file
+    -- Load config from JSON file
     if not M.load_config() then
         return
     end
@@ -197,7 +197,7 @@ end
 vim.cmd('command! RemoteSSHStart lua require("remote-ssh").start()')
 vim.cmd('command! RemoteSSHStop lua require("remote-ssh").stop()')
 
--- Set up command to create the .remote-ssh.yaml file
+-- Set up command to create the .remote-ssh.json file
 vim.cmd('command! RemoteSSHCreateConfig lua require("remote-ssh").create_config_file()')
 
 return M
