@@ -30,11 +30,17 @@ end
 function TestSync:setUp()
     self.config_filename = 'remote_connection.json'
     self.json_content = self:loadConfig()
-    print(self.json_content)
+    print(self.json_content["remote_host"])
+    
 end
 
 function TestSync:testAddZero()
     lu.assertEquals(0,0)
+end
+
+function TestSync:testSync()
+    print(self.json_content["remote_host"])
+    print("Completed testSync test")
 end
 
 
