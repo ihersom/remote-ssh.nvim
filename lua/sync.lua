@@ -65,7 +65,7 @@ function resolve_conflict(local_file, remote_file, remote_host, remote_user, bac
     end
 end
 
-function sync_folders(local_folder, remote_folder, remote_host, remote_user, backup_dir)
+function rsync(local_folder, remote_folder, remote_host, remote_user, backup_dir, push_or_pull)
     local rsync_options = {
         "--archive",
         "--verbose",
@@ -75,12 +75,24 @@ function sync_folders(local_folder, remote_folder, remote_host, remote_user, bac
         "--backup-dir=" .. backup_dir,
         "--suffix=.bak",
     }
+    local source = ""
+    local destination = ""
+    if push_or_pull == "push" then
+        source = local_folder
+        destination = remote_user .. "@" .. remote_host .. ":" .. remote_folder
+    elseif push_or_pull == "pull" then
+        source = remote_user .. "@" .. remote_host .. ":" .. remote_folder
+        destination = local_folder
+    end
+
+    local rsync_str = "rsync " .. table.concat(rsync_options, " ") .. " " .. source .. " " .. destination
+
+    os.execute(rsync_str)
+end
+
+function sync_folders(local_folder, remote_folder, remote_host, remote_user, backup_dir)
 
     -- Use rsync to sync remote to local first, handling conflicts manually
-    local rsync_pull = "rsync " .. table.concat(rsync_options, " ") ..
-                       " " .. remote_user .. "@" .. remote_host .. ":" .. remote_folder ..
-                       " " .. local_folder
-    os.execute(rsync_pull)
 
     -- Resolve conflicts by syncing individual files based on the conflict resolution
     for file in io.popen('find "' .. local_folder .. '" -type f'):lines() do
@@ -89,12 +101,8 @@ function sync_folders(local_folder, remote_folder, remote_host, remote_user, bac
 
         if action == "local_to_remote" then
             print("Syncing local to remote for file: " .. file)
-            os.execute("rsync " .. table.concat(rsync_options, " ") .. " " .. file .. " " ..
-                       remote_user .. "@" .. remote_host .. ":" .. remote_file)
         elseif action == "remote_to_local" then
             print("Syncing remote to local for file: " .. file)
-            os.execute("rsync " .. table.concat(rsync_options, " ") .. " " ..
-                       remote_user .. "@" .. remote_host .. ":" .. remote_file .. " " .. file)
         elseif action == "no_action" then
             print("No action needed for file: " .. file)
        end
