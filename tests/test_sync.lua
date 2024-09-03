@@ -39,8 +39,14 @@ function TestSync:testAddZero()
 end
 
 function TestSync:testSync()
-    print(self.json_content["remote_host"])
-    print("Completed testSync test")
+    -- sync_folders(
+    --     self.json_content["local_folder"],
+    --     self.json_content["remote_folder"],
+    --     self.json_content["remote_host"],
+    --     self.json_content["remote_user"],
+    --     self.json_content["local_folder"] .. "/backup"
+    -- )
+    -- print("Completed testSync test")
 end
 
 
