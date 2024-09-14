@@ -73,12 +73,13 @@ function TestSync:testCompare()
     local test_file_name = "compare_test_file.txt"
     os.execute("touch " .. self.test_run_folder .. "/" .. test_file_name)
     os.execute("ssh " .. self.json_content["remote_user"] .. "@" .. self.json_content["remote_host"] .. " touch " .. self.json_content["remote_folder"] .. "/" .. test_file_name)
+
     local local_file = self.test_run_folder .. "/" .. test_file_name
     local remote_file = self.json_content["remote_folder"] .. "/" .. test_file_name
+
     local output = compare_files(self.json_content["remote_host"], self.json_content["remote_user"])
     print("Output is: " .. output)
 end
-
 
 -- run your tests:
 os.exit( lu.LuaUnit.run() )

@@ -1,0 +1,7 @@
+{
+    "remote_user": "username",
+    "remote_host": "ip address",
+    "remote_folder": "/path/to/folder",
+    "rsync_options": "-avz",
+    "local_folder": "/local/folder/path"
+}

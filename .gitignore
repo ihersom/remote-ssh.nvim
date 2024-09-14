@@ -41,3 +41,4 @@ luac.out
 
 # Random
 test_runs/
+remote_connection.json
