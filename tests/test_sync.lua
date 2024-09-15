@@ -77,7 +77,8 @@ function TestSync:testCompare()
     local local_file = self.test_run_folder .. "/" .. test_file_name
     local remote_file = self.json_content["remote_folder"] .. "/" .. test_file_name
 
-    local output = compare_files(self.json_content["remote_host"], self.json_content["remote_user"])
+    local output = compare_files(local_file, remote_file, self.json_content["remote_host"], self.json_content["remote_user"])
+    -- local_file, remote_file, remote_host, remote_user
     print("Output is: " .. output)
 end
 

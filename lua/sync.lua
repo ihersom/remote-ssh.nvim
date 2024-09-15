@@ -1,6 +1,23 @@
 
+function get_linux_or_macos_stat_command(path)
+    -- the first part is for linux, the second part for macos
+    --      simply returns a unix timestamp and a file size in bytes
+    local macos_or_linux_stat = "stat --format='%Y %s' " .. path .. " 2>/dev/null || stat -f '%m %z' " .. path
+    return macos_or_linux_stat
+end
+
+function run_local_command(command)
+    local handle = io.popen(command)
+end
+
+function run_remote_command(command)
+    
+end
+
 function get_file_info(path)
-    local handle = io.popen("stat --format='%Y %s' " .. path)
+    -- the first part is for linux, the second part for macos 
+    local macos_or_linux_stat = get_linux_or_macos_stat_command(path)
+    local handle = io.popen(macos_or_linux_stat)
     local result = handle:read("*a")
     handle:close()
     
@@ -9,15 +26,16 @@ function get_file_info(path)
 end
 
 function compare_files(local_file, remote_file, remote_host, remote_user)
+    print("local file is: " .. local_file)
     local local_timestamp, local_size = get_file_info(local_file)
     local remote_timestamp, remote_size
+    print("local timestamp is: " .. tostring(local_timestamp))
+    print("local size is: " .. tostring(local_size))
 
     -- Get remote file info using SSH
-    local ssh_command = string.format(
-        "ssh %s@%s stat --format='%%Y %%s' %s",
-        remote_user, remote_host, remote_file
-    )
-    
+    local ssh_command = "ssh " .. remote_user .. "@" .. remote_host .. " \"" .. get_linux_or_macos_stat_command(remote_file) .. "\""
+    print("ssh command is: " .. ssh_command)
+
     local handle = io.popen(ssh_command)
     local result = handle:read("*a")
     handle:close()
@@ -30,7 +48,9 @@ function compare_files(local_file, remote_file, remote_host, remote_user)
 
     remote_timestamp = tonumber(remote_timestamp)
     remote_size = tonumber(remote_size)
-
+    
+    print("local timestamp is: " .. tostring(local_timestamp))
+    print("remote timestamp is: " .. tostring(remote_timestamp))
     if local_timestamp > remote_timestamp then
         return "local_newer"
     elseif local_timestamp < remote_timestamp then
