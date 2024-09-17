@@ -28,6 +28,9 @@ function get_local_file_info(path)
 end
 
 function compare_files(local_file, remote_file, remote_host, remote_user)
+    local which_timestamp_newer
+    local size_conflict
+
     print("local file is: " .. local_file)
     local local_timestamp, local_size = get_local_file_info(local_file)
     local remote_timestamp, remote_size
@@ -39,23 +42,32 @@ function compare_files(local_file, remote_file, remote_host, remote_user)
     remote_timestamp, remote_size = result:match("(%d+) (%d+)")
 
     if not remote_timestamp then
-        return "local_newer" -- Remote file doesn't exist, so local is considered newer
+        which_timestamp_newer = "local" -- Remote file doesn't exist, so local is considered newer
     end
 
     remote_timestamp = tonumber(remote_timestamp)
     remote_size = tonumber(remote_size)
-    
+
+    print("remote size is: " .. remote_size)
     print("local timestamp is: " .. tostring(local_timestamp))
     print("remote timestamp is: " .. tostring(remote_timestamp))
+
     if local_timestamp > remote_timestamp then
-        return "local_newer"
+        which_timestamp_newer = "local"
     elseif local_timestamp < remote_timestamp then
-        return "remote_newer"
-    elseif local_size ~= remote_size then
-        return "size_conflict"
-    else
-        return "no_conflict"
+        which_timestamp_newer = "remote"
+    elseif local_timestamp == remote_timestamp then
+        which_timestamp_newer = "same"
     end
+
+    if local_size ~= remote_size then
+        size_conflict = true
+    else
+        size_conflict = false
+    end
+    assert(type(which_timestamp_newer) == "string")
+    assert(type(size_conflict) == "boolean")
+    return which_timestamp_newer, size_conflict
 end
 
 function resolve_conflict(local_file, remote_file, remote_host, remote_user, backup_dir)
@@ -81,16 +93,21 @@ function resolve_conflict(local_file, remote_file, remote_host, remote_user, bac
     end
 end
 
-function rsync(local_folder, remote_folder, remote_host, remote_user, backup_dir, push_or_pull)
+function rsync(local_folder, remote_folder, remote_host, remote_user, push_or_pull, backup_dir)
+    backup_dir = backup_dir or ""
+    print("BACKUP DIR is " .. backup_dir)
     local rsync_options = {
         "--archive",
         "--verbose",
         "--compress",
         "--delete",
-        "--backup",
-        "--backup-dir=" .. backup_dir,
-        "--suffix=.bak",
     }
+    if backup_dir ~= "" then -- add backup options
+        table.insert(rsync_options, "--backup")
+        table.insert(rsync_options, "--backup-dir" .. backup_dir)
+        table.insert(rsync_options, "--suffix=.bak")
+    end
+
     local source = ""
     local destination = ""
     if push_or_pull == "push" then
@@ -102,7 +119,7 @@ function rsync(local_folder, remote_folder, remote_host, remote_user, backup_dir
     end
 
     local rsync_str = "rsync " .. table.concat(rsync_options, " ") .. " " .. source .. " " .. destination
-
+    print("RSYNC string to execute is: " .. rsync_str)
     os.execute(rsync_str)
 end
 

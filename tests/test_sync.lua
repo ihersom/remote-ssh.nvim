@@ -17,6 +17,7 @@ local function create_folder_based_on_time()
 end
 
 
+
 TestSync = {}
 
 function openFile(config_file)
@@ -46,49 +47,62 @@ function TestSync:setUp()
     print(self.json_content["remote_host"])
 
     local folder_name = create_folder_based_on_time()
-    self.test_run_folder = "../test_runs/" .. folder_name
-    print("Test run folder is: " .. self.test_run_folder)
-    local mkdir_command = "mkdir -p " .. self.test_run_folder
+    self.test_run_folder_name = folder_name
+    self.test_run_folder_path = "../test_runs/" .. folder_name
+    print("Test run folder is: " .. self.test_run_folder_path)
+    local mkdir_command = "mkdir -p " .. self.test_run_folder_path
     os.execute(mkdir_command)
     print("Setup complete...")
 end
 
+-- function TestSync:testSync()
+--     sync_folders(
+--         self.json_content["local_folder"],
+--         self.json_content["remote_folder"],
+--         self.json_content["remote_host"],
+--         self.json_content["remote_user"],
+--         self.json_content["local_folder"] .. "/backup"
+--     )
+--     print("Completed testSync test")
+-- end
 
-function TestSync:testAddZero()
-    lu.assertEquals(0,0)
-end
-
-function TestSync:testSync()
-    -- sync_folders(
-    --     self.json_content["local_folder"],
-    --     self.json_content["remote_folder"],
-    --     self.json_content["remote_host"],
-    --     self.json_content["remote_user"],
-    --     self.json_content["local_folder"] .. "/backup"
-    -- )
-    -- print("Completed testSync test")
-end
-
-function TestSync:testCompare()
+function TestSync:testFileComparison()
     print("Running compare test")
+
     local test_file_name = "compare_test_file.txt"
-    local local_file = self.test_run_folder .. "/" .. test_file_name
+    local local_file = self.test_run_folder_path .. "/" .. test_file_name
     local remote_file = self.json_content["remote_folder"] .. "/" .. test_file_name
-    
+
     run_local_command("touch " .. local_file)
-    
-    -- os.execute("ssh " .. self.json_content["remote_user"] .. "@" .. self.json_content["remote_host"] .. " touch " .. self.json_content["remote_folder"] .. "/" .. test_file_name)
-    
-    os.execute("usleep 100000")  -- Sleeps for 100 milliseconds (100,000 microseconds)
+    run_local_command("echo \"put some text in the file...\" >> " .. local_file)
+    os.execute("sleep 1")  -- Sleeps for 100 milliseconds (100,000 microseconds)
     run_remote_command(
         "touch " .. remote_file,
         self.json_content["remote_user"],
         self.json_content["remote_host"]
     )
 
-    local output = compare_files(local_file, remote_file, self.json_content["remote_host"], self.json_content["remote_user"])
-    -- local_file, remote_file, remote_host, remote_user
-    print("Output is: " .. output)
+    local which_timestamp_newer, size_conflict = compare_files(local_file, remote_file, self.json_content["remote_host"], self.json_content["remote_user"])
+
+    print("Which timestamp is newer: " .. which_timestamp_newer)
+    print("Files different size? ... " .. tostring(size_conflict))
+
+    lu.assertEquals(which_timestamp_newer, "remote")
+    lu.assertEquals(size_conflict, true)
+
+    if which_timestamp_newer == "remote" then
+        rsync(local_file, remote_file, self.json_content["remote_host"], self.json_content["remote_user"], "pull")
+        print("Pulled down remote file..")
+    elseif which_timestamp_newer == "local" then
+        rsync(local_file, remote_file, self.json_content["remote_host"], self.json_content["remote_user"], "push")
+        print("Pushed up local file..")
+    elseif which_timestamp_newer == "same" then
+        print("Timestamps are the same...")
+    end
+
+    local which_timestamp_newer_check, size_conflict_check = compare_files(local_file, remote_file, self.json_content["remote_host"], self.json_content["remote_user"])
+    print("Checking rsync results...")
+    print("End of Test, which_timestamp_newer is: " .. tostring(which_timestamp_newer_check) .. " and size_conflict is: " .. tostring(size_conflict_check))
 end
 
 -- run your tests:
