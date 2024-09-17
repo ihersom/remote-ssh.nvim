@@ -72,11 +72,19 @@ end
 function TestSync:testCompare()
     print("Running compare test")
     local test_file_name = "compare_test_file.txt"
-    os.execute("touch " .. self.test_run_folder .. "/" .. test_file_name)
-    os.execute("ssh " .. self.json_content["remote_user"] .. "@" .. self.json_content["remote_host"] .. " touch " .. self.json_content["remote_folder"] .. "/" .. test_file_name)
-
     local local_file = self.test_run_folder .. "/" .. test_file_name
     local remote_file = self.json_content["remote_folder"] .. "/" .. test_file_name
+    
+    run_local_command("touch " .. local_file)
+    
+    -- os.execute("ssh " .. self.json_content["remote_user"] .. "@" .. self.json_content["remote_host"] .. " touch " .. self.json_content["remote_folder"] .. "/" .. test_file_name)
+    
+    os.execute("usleep 100000")  -- Sleeps for 100 milliseconds (100,000 microseconds)
+    run_remote_command(
+        "touch " .. remote_file,
+        self.json_content["remote_user"],
+        self.json_content["remote_host"]
+    )
 
     local output = compare_files(local_file, remote_file, self.json_content["remote_host"], self.json_content["remote_user"])
     -- local_file, remote_file, remote_host, remote_user
