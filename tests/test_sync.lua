@@ -66,13 +66,14 @@ end
 --     print("Completed testSync test")
 -- end
 
-function TestSync:testFileComparison()
+function TestSync:testFileComparisonAndSync()
     print("Running compare test")
 
     local test_file_name = "compare_test_file.txt"
     local local_file = self.test_run_folder_path .. "/" .. test_file_name
     local remote_file = self.json_content["remote_folder"] .. "/" .. test_file_name
-
+    
+    -- Set remote file newer
     run_local_command("touch " .. local_file)
     run_local_command("echo \"put some text in the file...\" >> " .. local_file)
     os.execute("sleep 1")  -- Sleeps for 100 milliseconds (100,000 microseconds)

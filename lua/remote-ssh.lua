@@ -3,6 +3,7 @@
 local M = {}
 
 local Job = require('plenary.job')
+local Async = require('plenary.async')
 local json = require('json')
 local uv = vim.loop
 
@@ -98,17 +99,22 @@ M.sync_from_remote = function()
         M.config.local_folder
     )
 
-    Job:new({
-        command = 'bash',
-        args = { '-c', cmd },
-        on_exit = function(j, return_val)
-            if return_val == 0 then
-                print('Sync from remote completed successfully!')
-            else
-                print('Error during sync from remote:', j:result())
-            end
-        end,
-    }):start()
+    -- Job:new({
+    --     command = 'bash',
+    --     args = { '-c', cmd },
+    --     on_exit = function(j, return_val)
+    --         if return_val == 0 then
+    --             print('Sync from remote completed successfully!')
+    --         else
+    --             print('Error during sync from remote:', j:result())
+    --         end
+    --     end,
+    -- }):start()
+    Async.run(
+        function()
+            local which_timestamp_newer, size_conflict = compare_files(local_file, remote_file, self.json_content["remote_host"], self.json_content["remote_user"])
+        end
+    )
 end
 
 -- Function to sync from local to remote
