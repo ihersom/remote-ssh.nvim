@@ -54,7 +54,7 @@ local function compare_and_sync(local_file, remote_file, local_ts, remote_ts)
   elseif local_ts > remote_ts then
     rsync(local_file, config.remote_user, config.remote_host, config.remote_folder_path .. local_file, "push")
   end
-endgg
+end
 
 local function check_conflicts(local_path)
   for file in vim.fn.glob(local_path .. '/*', 0, 1) do
