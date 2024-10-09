@@ -121,11 +121,14 @@ function M.on_save()
 end
 
 function M.setup()
-  vim.api.nvim_create_user_command('RemoteSSHStart', M.start, {})
-  vim.api.nvim_create_user_command('RemoteSSHStop', M.stop, {})
-  vim.api.nvim_create_user_command('RemoteSSHCreateConfig', M.create_config, {})
+    --vim.api.nvim_create_user_command('RemoteSSHStart', M.start, {})
+    --vim.api.nvim_create_user_command('RemoteSSHStop', M.stop, {})
+    --vim.api.nvim_create_user_command('RemoteSSHCreateConfig', M.create_config, {})
+    vim.cmd('command! RemoteSSHStart lua require("remote-ssh").start()')
+    vim.cmd('command! RemoteSSHStop lua require("remote-ssh").stop()')
+    vim.cmd('command! RemoteSSHStop lua require("remote-ssh").create_config()')
 
-  vim.api.nvim_create_autocmd("BufWritePost", {
+    vim.api.nvim_create_autocmd("BufWritePost", {
     pattern = "*",
     callback = function()
       M.on_save()
