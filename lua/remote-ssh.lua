@@ -11,10 +11,13 @@ local config = nil
 local function read_config()
     local path = Path:new(vim.fn.getcwd() .. "/" .. config_file)
     if path:exists() then
+        print("Config path exists")
         local content = path:read()
         config = vim.fn.json_decode(content)
+        print("Config is" .. tostring(config))
     else
         config = nil
+        print("Config path didn't exist... config is nil")
     end
 end
 
