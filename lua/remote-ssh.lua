@@ -168,6 +168,16 @@ local function async_startup()
     end)
 end
 
+-- Async file save sync logic
+local function async_file_save(file)
+    async.run(function()
+        ensure_config_exists()
+        if config then
+            compare_and_sync(file)
+        end
+    end)
+end
+
 -- Command to create a config file
 function M.create_config()
     create_config()
@@ -176,6 +186,14 @@ end
 -- Command to start the plugin
 function M.start()
     async_startup()
+    -- Set up autocmd to sync on file save
+    vim.api.nvim_create_autocmd("BufWritePost", {
+        pattern = "*",
+        callback = function(args)
+            local file = args.file
+            async_file_save(file)
+        end
+    })
     print("Remote SSH syncing started.")
 end
 
