@@ -11,13 +11,10 @@ local config = nil
 local function read_config()
     local path = Path:new(vim.fn.getcwd() .. "/" .. config_file)
     if path:exists() then
-        print("Config path exists")
         local content = path:read()
         config = vim.fn.json_decode(content)
-        print("Config is" .. tostring(config))
     else
         config = nil
-        print("Config path didn't exist... config is nil")
     end
 end
 
@@ -35,14 +32,13 @@ local function create_config()
     print("Created default config file: " .. config_file)
 end
 
--- Check if config exists or create a new one
+-- Ensure config is loaded or prompt to create one
 local function ensure_config_exists()
-    read_config()
     if not config then
         local create = vim.fn.input("No config file found. Create one? (y/n): ")
         if create:lower() == "y" then
             create_config()
-            read_config()
+            read_config() -- Reload the config after creating it
         else
             print("Remote SSH plugin needs a config file to run.")
         end
@@ -199,10 +195,15 @@ end
 
 -- Command to stop the plugin
 function M.stop()
+    -- Clear all autocmds related to BufWritePost for RemoteSSH
+    vim.api.nvim_clear_autocmds({ event = "BufWritePost", group = "RemoteSSHGroup" })
     print("Remote SSH syncing stopped.")
 end
 
--- Setup commands
+-- At the end of the file, ensure config is read and commands are registered.
+read_config() -- Attempt to read the config file immediately
+
+-- Setup Neovim commands
 vim.api.nvim_create_user_command('RemoteSSHStart', M.start, {})
 vim.api.nvim_create_user_command('RemoteSSHStop', M.stop, {})
 vim.api.nvim_create_user_command('RemoteSSHCreateConfig', M.create_config, {})
