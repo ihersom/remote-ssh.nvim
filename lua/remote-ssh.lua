@@ -45,13 +45,15 @@ local function ensure_config_exists()
     end
 end
 
--- Function to run rsync commands
+
 local function rsync_sync(local_path, remote_path, direction)
     local cmd
     if direction == "to_remote" then
-        cmd = string.format("rsync %s %s %s@%s:%s", config.rsync_options, local_path, config.remote_user, config.remote_host, remote_path)
+        -- Sync the contents of the local folder to the remote folder
+        cmd = string.format("rsync %s %s/ %s@%s:%s/", config.rsync_options, local_path, config.remote_user, config.remote_host, remote_path)
     else
-        cmd = string.format("rsync %s %s@%s:%s %s", config.rsync_options, config.remote_user, config.remote_host, remote_path, local_path)
+        -- Sync the contents of the remote folder to the local folder
+        cmd = string.format("rsync %s %s@%s:%s/ %s/", config.rsync_options, config.remote_user, config.remote_host, remote_path, local_path)
     end
     Job:new({ command = 'bash', args = { '-c', cmd }, on_exit = function(j, return_val)
         if return_val == 0 then
@@ -146,12 +148,12 @@ local function async_startup()
             local remote_empty = is_directory_empty(config.remote_folder_path, true)
 
             if remote_empty and not local_empty then
-                -- Remote directory is empty and local is not, rsync local to remote
-                print("Remote directory is empty, syncing local directory to remote...")
+                -- Remote directory is empty and local is not, rsync local contents to remote
+                print("Remote directory is empty, syncing local directory contents to remote...")
                 rsync_sync(config.local_folder_path, config.remote_folder_path, "to_remote")
             elseif not remote_empty and local_empty then
-                -- Local directory is empty, rsync remote to local
-                print("Local directory is empty, syncing remote directory to local...")
+                -- Local directory is empty, rsync remote contents to local
+                print("Local directory is empty, syncing remote directory contents to local...")
                 rsync_sync(config.local_folder_path, config.remote_folder_path, "to_local")
             elseif not remote_empty and not local_empty then
                 -- Both directories have files, perform conflict resolution
