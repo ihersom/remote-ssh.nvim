@@ -34,6 +34,7 @@ end
 
 -- Ensure config is loaded or prompt to create one
 local function ensure_config_exists()
+    read_config()
     if not config then
         local create = vim.fn.input("No config file found. Create one? (y/n): ")
         if create:lower() == "y" then
