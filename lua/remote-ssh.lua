@@ -226,7 +226,7 @@ local function sync_files_on_startup()
     -- Get the list of local files
     local local_files = vim.fn.globpath(config.local_folder_path, "**/*", 0, 1)
     for _, file in ipairs(local_files) do
-        async.run(function()
+        async.void(function()
             compare_and_sync(file)
         end)
     end
@@ -234,7 +234,7 @@ end
 
 -- Async startup sync logic
 local function async_startup()
-    async.void(function()
+    async.run(function()
         ensure_config_exists()
         if config then
             print("Config contents:\nlocal folder path: " .. config.local_folder_path .. "\nremote folder path: " .. config.remote_folder_path .. "\nuser: " .. config.remote_user .. "\nhost: " .. config.remote_host)
