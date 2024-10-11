@@ -73,7 +73,7 @@ function rsync(local_path, remote_path, push_or_pull)
         destination = local_path
     end
 
-    local rsync_str = "rsync " .. table.concat(rsync_options, " ") .. " " .. source .. " " .. destination
+    local rsync_str = "rsync " .. table.concat(rsync_options, " ") .. " " .. source .. "/" .. " " .. destination .. "/"
     print("RSYNC string to execute is: " .. rsync_str)
     
     Job:new({ command = 'bash', args = { '-c', rsync_str }, on_exit = function(j, return_val)
