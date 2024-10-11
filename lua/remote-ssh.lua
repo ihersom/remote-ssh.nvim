@@ -48,7 +48,6 @@ local function ensure_config_exists()
     end
 end
 
-
 local function rsync_sync(local_path, remote_path, direction)
     local cmd
     if direction == "to_remote" then
@@ -93,45 +92,95 @@ local function is_directory_empty(path, is_remote)
     end
 end
 
+
+function get_linux_or_macos_stat_command(path)
+    -- the first part is for linux, the second part for macos
+    --      simply returns a unix timestamp and a file size in bytes
+    local macos_or_linux_stat = "stat --format='%Y %s' " .. path .. " 2>/dev/null || stat -f '%m %z' " .. path
+    return macos_or_linux_stat
+end
+
+function run_local_command(command)
+    local handle = io.popen(command)
+    local result = handle:read("*a")
+    handle:close()
+    return result
+end
+
+function run_remote_command(command, remote_user, remote_host)
+    local ssh_command = "ssh " .. remote_user .. "@" .. remote_host .. " \"" .. command .. "\""
+    local result = run_local_command(ssh_command)
+    return result
+end
+
+function get_local_file_info(path)
+    -- the first part is for linux, the second part for macos 
+    local macos_or_linux_stat = get_linux_or_macos_stat_command(path)
+    local result = run_local_command(macos_or_linux_stat)    
+    local timestamp, size = result:match("(%d+) (%d+)")
+    return tonumber(timestamp), tonumber(size)
+end
+
+function compare_files(local_file, remote_file)
+    local which_timestamp_newer
+    local size_conflict
+
+    print("local file is: " .. local_file)
+    local local_timestamp, local_size = get_local_file_info(local_file)
+    local remote_timestamp, remote_size
+    print("local timestamp is: " .. tostring(local_timestamp))
+    print("local size is: " .. tostring(local_size))
+
+    -- Get remote file info using SSH
+    local result = run_remote_command(get_linux_or_macos_stat_command(remote_file), config.remote_user, config.remote_host)
+    remote_timestamp, remote_size = result:match("(%d+) (%d+)")
+
+    if not remote_timestamp then
+        which_timestamp_newer = "local" -- Remote file doesn't exist, so local is considered newer
+    end
+
+    remote_timestamp = tonumber(remote_timestamp)
+    remote_size = tonumber(remote_size)
+
+    print("remote size is: " .. remote_size)
+    print("local timestamp is: " .. tostring(local_timestamp))
+    print("remote timestamp is: " .. tostring(remote_timestamp))
+
+    if local_timestamp > remote_timestamp then
+        which_timestamp_newer = "local"
+    elseif local_timestamp < remote_timestamp then
+        which_timestamp_newer = "remote"
+    elseif local_timestamp == remote_timestamp then
+        which_timestamp_newer = "same"
+    end
+
+    if local_size ~= remote_size then
+        size_conflict = true
+    else
+        size_conflict = false
+    end
+    assert(type(which_timestamp_newer) == "string")
+    assert(type(size_conflict) == "boolean")
+    return which_timestamp_newer, size_conflict
+end
+
 -- Compare local and remote files and sync if necessary
 local function compare_and_sync(file)
     local local_file = Path:new(file)
     local relative_path = file:sub(#config.local_folder_path + 2)
     local remote_file = config.remote_folder_path .. "/" .. relative_path
 
-    -- Get local file info
-    local local_stat = uv.fs_stat(file)
-    if not local_stat then
-        print("Local file not found: " .. file)
-        return
+    local which_timestamp_newer, size_conflict = compare_files(local_file:absolute(), remote_file)
+    
+    -- Conflict resolution
+    if which_timestamp_newer == "local" then
+        rsync_sync(local_file:absolute(), remote_file, "to_remote")
+    elseif which_timestamp_newer == "remote" then
+        rsync_sync(local_file:absolute(), remote_file, "to_local")
+    elseif size_conflict then
+        print("File size mismatch, not syncing based on size.")
+        -- rsync_sync(local_file:absolute(), remote_file, "to_local")
     end
-
-    -- Get remote file info
-    local remote_cmd = string.format('ssh %s@%s stat -c "%%Y %%s" %s', config.remote_user, config.remote_host, remote_file)
-    print("compare and sync remote_cmd is: " .. remote_cmd)
-    Job:new({
-        command = 'bash',
-        args = { '-c', remote_cmd },
-        on_exit = function(j, return_val)
-            if return_val == 0 then
-                local remote_info = vim.split(j:result()[1], " ")
-                local remote_mtime = tonumber(remote_info[1])
-                local remote_size = tonumber(remote_info[2])
-
-                -- Conflict resolution
-                if local_stat.mtime.sec > remote_mtime then
-                    rsync_sync(local_file:absolute(), remote_file, "to_remote")
-                elseif local_stat.mtime.sec < remote_mtime then
-                    rsync_sync(local_file:absolute(), remote_file, "to_local")
-                elseif local_stat.size ~= remote_size then
-                    print("File size mismatch, syncing based on size.")
-                    rsync_sync(local_file:absolute(), remote_file, "to_local")
-                end
-            else
-                print("Remote file not found: " .. remote_file)
-            end
-        end,
-    }):start()
 end
 
 -- Sync all files on startup
