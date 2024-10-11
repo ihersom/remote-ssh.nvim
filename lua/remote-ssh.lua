@@ -108,6 +108,7 @@ local function compare_and_sync(file)
 
     -- Get remote file info
     local remote_cmd = string.format('ssh %s@%s stat -c "%%Y %%s" %s', config.remote_user, config.remote_host, remote_file)
+    print("compare and sync remote_cmd is: " .. remote_cmd)
     Job:new({
         command = 'bash',
         args = { '-c', remote_cmd },
