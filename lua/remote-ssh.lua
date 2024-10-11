@@ -285,6 +285,7 @@ function M.start()
     -- Set up autocmd to sync on file save
     vim.api.nvim_create_autocmd("BufWritePost", {
         pattern = "*",
+        group = group_id,
         callback = function(args)
             local file = args.file
             async_file_save(file)
@@ -296,12 +297,15 @@ end
 -- Command to stop the plugin
 function M.stop()
     -- Clear all autocmds related to BufWritePost for RemoteSSH
-    vim.api.nvim_clear_autocmds({ event = "BufWritePost", group = "RemoteSSHGroup" })
+    vim.api.nvim_clear_autocmds({event = "BufWritePost", group = group_id})
     print("Remote SSH syncing stopped.")
 end
 
 -- At the end of the file, ensure config is read and commands are registered.
 read_config() -- Attempt to read the config file immediately
+
+-- Create an autocmd group for RemoteSSH
+local group_id = vim.api.nvim_create_augroup("RemoteSSHGroup", { clear = true })
 
 -- Setup Neovim commands
 vim.api.nvim_create_user_command('RemoteSSHStart', M.start, {})
