@@ -13,8 +13,10 @@ local function read_config()
     if path:exists() then
         local content = path:read()
         config = vim.fn.json_decode(content)
+        print("Config file loaded")
     else
         config = nil
+        print("Config file could not be found")
     end
 end
 
@@ -70,6 +72,7 @@ local function is_directory_empty(path, is_remote)
     if is_remote then
         -- Remote directory empty check using ssh and find
         local remote_cmd = string.format('ssh %s@%s "find %s -type f | wc -l"', config.remote_user, config.remote_host, path)
+        print("is_directory_empty cmd: " .. remote_cmd)
         return Job:new({
             command = 'bash',
             args = { '-c', remote_cmd },
@@ -85,6 +88,7 @@ local function is_directory_empty(path, is_remote)
     else
         -- Local directory empty check
         local files = vim.fn.globpath(path, "*", 0, 1)
+        print("# files found locally is " .. tostring(files))
         return #files == 0
     end
 end
@@ -143,10 +147,13 @@ local function async_startup()
     async.run(function()
         ensure_config_exists()
         if config then
+            print("Config contents:\nlocal folder path: " .. config.local_folder_path .. "\nremote folder path: " .. config.remote_folder_path .. "\nuser: " .. config.remote_user .. "\nhost: " .. config.remote_host)
             -- Check if the local directory is empty
             local local_empty = is_directory_empty(config.local_folder_path, false)
+            print("local folder path empty: " .. tostring(local_empty))
             -- Check if the remote directory is empty
             local remote_empty = is_directory_empty(config.remote_folder_path, true)
+            print("remote folder path empty: " .. tostring(remote_empty))
 
             if remote_empty and not local_empty then
                 -- Remote directory is empty and local is not, rsync local contents to remote
