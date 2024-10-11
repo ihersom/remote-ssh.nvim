@@ -180,9 +180,9 @@ function compare_files(local_file, remote_file)
     remote_timestamp = tonumber(remote_timestamp)
     remote_size = tonumber(remote_size)
 
-    -- print("remote size is: " .. remote_size)
-    -- print("local timestamp is: " .. tostring(local_timestamp))
-    -- print("remote timestamp is: " .. tostring(remote_timestamp))
+    print("remote size is: " .. remote_size)
+    print("local timestamp is: " .. tostring(local_timestamp))
+    print("remote timestamp is: " .. tostring(remote_timestamp))
 
     if local_timestamp > remote_timestamp then
         which_timestamp_newer = "local"
@@ -208,8 +208,8 @@ local function compare_and_sync(file)
     local relative_path = file:sub(#config.local_folder_path + 2)
     local remote_file = config.remote_folder_path .. "/" .. relative_path
 
-    local which_timestamp_newer, size_conflict = compare_files(local_file:absolute(), remote_file)
-    
+    local which_timestamp_newer, size_conflict = compare_files(tostring(local_file:absolute()), remote_file)
+
     -- Conflict resolution
     if which_timestamp_newer == "local" then
         rsync(local_file:absolute(), remote_file, "push")
