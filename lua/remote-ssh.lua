@@ -226,7 +226,9 @@ local function sync_files_on_startup()
     -- Get the list of local files
     local local_files = vim.fn.globpath(config.local_folder_path, "**/*", 0, 1)
     for _, file in ipairs(local_files) do
-        compare_and_sync(file)
+        async.run(function()
+            compare_and_sync(file)
+        end)
     end
 end
 
