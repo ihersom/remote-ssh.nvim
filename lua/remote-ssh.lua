@@ -48,6 +48,43 @@ local function ensure_config_exists()
     end
 end
 
+function rsync(local_path, remote_path, push_or_pull)
+    -- backup_dir = backup_dir or ""
+    -- print("BACKUP DIR is " .. backup_dir)
+    local rsync_options = {
+        "--archive",
+        "--verbose",
+        "--compress",
+        "--delete",
+    }
+    -- if backup_dir ~= "" then -- add backup options
+    --     table.insert(rsync_options, "--backup")
+    --     table.insert(rsync_options, "--backup-dir" .. backup_dir)
+    --     table.insert(rsync_options, "--suffix=.bak")
+    -- end
+
+    local source = ""
+    local destination = ""
+    if push_or_pull == "push" then
+        source = local_path
+        destination = config.remote_user .. "@" .. config.remote_host .. ":" .. remote_path
+    elseif push_or_pull == "pull" then
+        source = config.remote_user .. "@" .. config.remote_host .. ":" .. remote_path
+        destination = local_path
+    end
+
+    local rsync_str = "rsync " .. table.concat(rsync_options, " ") .. " " .. source .. " " .. destination
+    print("RSYNC string to execute is: " .. rsync_str)
+    
+    Job:new({ command = 'bash', args = { '-c', rsync_str }, on_exit = function(j, return_val)
+       if return_val == 0 then
+           print("Rsync completed successfully")
+       else
+           print("Rsync failed: " .. table.concat(j:result(), "\n"))
+       end
+    end }):start()
+end
+
 local function rsync_sync(local_path, remote_path, direction)
     local cmd
     if direction == "to_remote" then
@@ -174,12 +211,12 @@ local function compare_and_sync(file)
     
     -- Conflict resolution
     if which_timestamp_newer == "local" then
-        rsync_sync(local_file:absolute(), remote_file, "to_remote")
+        rsync(local_file:absolute(), remote_file, "push")
     elseif which_timestamp_newer == "remote" then
-        rsync_sync(local_file:absolute(), remote_file, "to_local")
+        rsync(local_file:absolute(), remote_file, "pull")
     elseif size_conflict then
         print("File size mismatch, not syncing based on size.")
-        -- rsync_sync(local_file:absolute(), remote_file, "to_local")
+        -- rsync(local_file:absolute(), remote_file, "to_local")
     end
 end
 
@@ -208,11 +245,11 @@ local function async_startup()
             if remote_empty and not local_empty then
                 -- Remote directory is empty and local is not, rsync local contents to remote
                 print("Remote directory is empty, syncing local directory contents to remote...")
-                rsync_sync(config.local_folder_path, config.remote_folder_path, "to_remote")
+                rsync(config.local_folder_path, config.remote_folder_path, "push")
             elseif not remote_empty and local_empty then
                 -- Local directory is empty, rsync remote contents to local
                 print("Local directory is empty, syncing remote directory contents to local...")
-                rsync_sync(config.local_folder_path, config.remote_folder_path, "to_local")
+                rsync(config.local_folder_path, config.remote_folder_path, "pull")
             elseif not remote_empty and not local_empty then
                 -- Both directories have files, perform conflict resolution
                 print("Both directories contain files, resolving conflicts...")
