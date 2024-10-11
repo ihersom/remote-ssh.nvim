@@ -170,6 +170,7 @@ function compare_files(local_file, remote_file)
 
     -- Get remote file info using SSH
     local result = run_remote_command(get_linux_or_macos_stat_command(remote_file), config.remote_user, config.remote_host)
+    print("remote file info result is: " .. result)
     remote_timestamp, remote_size = result:match("(%d+) (%d+)")
 
     if not remote_timestamp then
@@ -179,9 +180,9 @@ function compare_files(local_file, remote_file)
     remote_timestamp = tonumber(remote_timestamp)
     remote_size = tonumber(remote_size)
 
-    print("remote size is: " .. remote_size)
-    print("local timestamp is: " .. tostring(local_timestamp))
-    print("remote timestamp is: " .. tostring(remote_timestamp))
+    -- print("remote size is: " .. remote_size)
+    -- print("local timestamp is: " .. tostring(local_timestamp))
+    -- print("remote timestamp is: " .. tostring(remote_timestamp))
 
     if local_timestamp > remote_timestamp then
         which_timestamp_newer = "local"
