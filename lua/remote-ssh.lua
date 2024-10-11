@@ -73,7 +73,7 @@ function rsync(local_path, remote_path, push_or_pull)
         destination = local_path
     end
 
-    local rsync_str = "rsync " .. table.concat(rsync_options, " ") .. " " .. source .. "/" .. " " .. destination .. "/"
+    local rsync_str = "rsync " .. table.concat(rsync_options, " ") .. " " .. source .. " " .. destination
     print("RSYNC string to execute is: " .. rsync_str)
     
     Job:new({ command = 'bash', args = { '-c', rsync_str }, on_exit = function(j, return_val)
@@ -246,11 +246,11 @@ local function async_startup()
             if remote_empty and not local_empty then
                 -- Remote directory is empty and local is not, rsync local contents to remote
                 print("Remote directory is empty, syncing local directory contents to remote...")
-                rsync(config.local_folder_path, config.remote_folder_path, "push")
+                rsync(config.local_folder_path .. "/", config.remote_folder_path .. "/", "push")
             elseif not remote_empty and local_empty then
                 -- Local directory is empty, rsync remote contents to local
                 print("Local directory is empty, syncing remote directory contents to local...")
-                rsync(config.local_folder_path, config.remote_folder_path, "pull")
+                rsync(config.local_folder_path .. "/", config.remote_folder_path .. "/", "pull")
             elseif not remote_empty and not local_empty then
                 -- Both directories have files, perform conflict resolution
                 print("Both directories contain files, resolving conflicts...")
