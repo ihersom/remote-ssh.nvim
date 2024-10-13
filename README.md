@@ -1,6 +1,8 @@
 # remote-ssh-nvim
+This plugin is meant to recreate similar behavior to VS Code's Remote SSH plugin by enabling the feel of a local editor while keeping the source code being edited on the remote machine for compilation, execution, etc
 
-## Unit Tests
-Unit tests are located in the ./tests folder and utilize luaunit. To run the tests, simply call your installed lua executable on any of the test_*.lua files individually or run the `run_tests.sh` script to execute all tests.
-
+## Remote SSH Commands
+`:RemoteSSHCreateConfig` will create a file in the current directory used to specify details of the local-remote session you'd like to run
+:RemoteSSHStart
+:RemoteSSHStop
 
