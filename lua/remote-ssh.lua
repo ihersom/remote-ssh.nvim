@@ -216,7 +216,7 @@ local function compare_and_sync(file)
     elseif which_timestamp_newer == "remote" then
         rsync(local_file:absolute(), remote_file, "pull")
     elseif size_conflict then
-        print("File size mismatch, not syncing based on size.")
+        print("File size mismatch, not syncing based on size, unimplemented logic")
         -- rsync(local_file:absolute(), remote_file, "to_local")
     end
 end
@@ -228,6 +228,7 @@ local function sync_files_on_startup()
     for _, file in ipairs(local_files) do
         async.void(function()
             compare_and_sync(file)
+            print("Remote SSH startup syncing finished")
         end)
     end
 end
