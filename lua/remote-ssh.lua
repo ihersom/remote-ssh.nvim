@@ -13,10 +13,10 @@ local function read_config()
     if path:exists() then
         local content = path:read()
         config = vim.fn.json_decode(content)
-        print("Config file loaded")
+        print("Remote SSH config file loaded")
     else
         config = nil
-        print("Config file could not be found")
+        print("Remote SSH config file could not be found")
     end
 end
 
