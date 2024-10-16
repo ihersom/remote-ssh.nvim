@@ -224,9 +224,11 @@ end
 -- Sync all files on startup
 local function sync_files_on_startup()
     -- Get the list of local files
+    print("Starting startup file sync")
     local local_files = vim.fn.globpath(config.local_folder_path, "**/*", 0, 1)
     for _, file in ipairs(local_files) do
         async.void(function()
+            print("Compare and syncing " .. tostring(file))
             compare_and_sync(file)
             print("Remote SSH startup syncing finished")
         end)
