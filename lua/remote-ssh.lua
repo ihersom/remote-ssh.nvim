@@ -204,6 +204,8 @@ end
 
 -- Compare local and remote files and sync if necessary
 local function compare_and_sync(file)
+    file = file:gsub(" ", "\\ ")
+    print("Compare and syncing " .. tostring(file))
     local local_file = Path:new(file)
     local relative_path = file:sub(#config.local_folder_path + 2)
     local remote_file = config.remote_folder_path .. "/" .. relative_path
@@ -228,7 +230,6 @@ local function sync_files_on_startup()
     local local_files = vim.fn.globpath(config.local_folder_path, "**/*", 0, 1)
     for _, file in ipairs(local_files) do
         async.run(function()
-            print("Compare and syncing " .. tostring(file))
             compare_and_sync(file)
             print("Remote SSH startup syncing finished")
         end)
