@@ -204,7 +204,8 @@ end
 
 -- Compare local and remote files and sync if necessary
 local function compare_and_sync(file)
-    file = file:gsub(" ", "\\ ")
+    file = file:gsub(" ", "\\ ") -- escape any spaces in the filename
+    file = "\"" .. file .. "\"" -- surround in quotes to terminate any space breaks in the string
     print("Compare and syncing " .. tostring(file))
     local local_file = Path:new(file)
     local relative_path = file:sub(#config.local_folder_path + 2)
