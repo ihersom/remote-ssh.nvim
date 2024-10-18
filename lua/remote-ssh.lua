@@ -207,17 +207,17 @@ local function compare_and_sync(file)
     file = file:gsub(" ", "\\ ") -- escape any spaces in the filename
     file = "\"" .. file .. "\"" -- surround in quotes to terminate any space breaks in the string
     print("Compare and syncing " .. tostring(file))
-    local local_file = Path:new(file)
+    -- local local_file = Path:new(file)
     local relative_path = file:sub(#config.local_folder_path + 2)
     local remote_file = config.remote_folder_path .. "/" .. relative_path
 
-    local which_timestamp_newer, size_conflict = compare_files(tostring(local_file:absolute()), remote_file)
+    local which_timestamp_newer, size_conflict = compare_files(tostring(local_file), remote_file)
 
     -- Conflict resolution
     if which_timestamp_newer == "local" then
-        rsync(local_file:absolute(), remote_file, "push")
+        rsync(local_file, remote_file, "push")
     elseif which_timestamp_newer == "remote" then
-        rsync(local_file:absolute(), remote_file, "pull")
+        rsync(local_file, remote_file, "pull")
     elseif size_conflict then
         print("File size mismatch, not syncing based on size, unimplemented logic")
         -- rsync(local_file:absolute(), remote_file, "to_local")
